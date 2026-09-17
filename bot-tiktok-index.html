@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bot de publicación — conexión con TikTok</title>
+<link rel="stylesheet" href="../estilo.css">
+</head>
+<body>
+<div class="envoltorio">
+
+<header>
+  <h1>Conexión con TikTok</h1>
+  <p class="sub">Página de retorno de la autorización de «Bot de publicación», la herramienta
+     personal del canal <a href="https://www.tiktok.com/@boveda.clips_es">@boveda.clips_es</a>.</p>
+  <nav>
+    <a href="../index.html">Inicio</a>
+    <a href="../privacidad.html">Política de privacidad</a>
+    <a href="../condiciones.html">Condiciones del servicio</a>
+  </nav>
+</header>
+
+<div class="caja">
+  <p id="estado">Esta página recibe el código de autorización que devuelve TikTok y lo entrega a la
+     aplicación, que está escuchando en el propio ordenador. No guarda nada ni lo envía a ningún
+     servidor.</p>
+</div>
+
+<h2>Por qué existe esta página</h2>
+<p>TikTok exige que la dirección de retorno de la autorización sea una dirección pública: no admite
+   <code>localhost</code>. La aplicación, en cambio, se ejecuta en el ordenador de su propietario.
+   Esta página es el puente entre las dos: recoge el código que manda TikTok y lo reenvía a
+   <code>http://127.0.0.1:8080/callback</code>, donde la aplicación lo está esperando.</p>
+<p>El código viaja del navegador al propio ordenador y no se almacena en ningún sitio. Esta página es
+   estática, no usa cookies y no recoge ningún dato de quien la visita.</p>
+
+<h2>Qué es «Bot de publicación»</h2>
+<p>Una aplicación de escritorio de uso personal que produce vídeos y los prepara para publicarlos en
+   las cuentas de su propio propietario. No es un servicio abierto: no tiene registro, ni cuentas de
+   usuario, ni versión alojada en internet. Su tratamiento de datos está descrito en la
+   <a href="../privacidad.html">política de privacidad</a>.</p>
+
+<h3>English</h3>
+<p>This page is the OAuth redirect target for "Bot de publicación", a personal desktop application
+   used by the owner of the TikTok account @boveda.clips_es. TikTok requires a public redirect URI and
+   the application runs locally, so this page forwards the authorisation code it receives to
+   <code>http://127.0.0.1:8080/callback</code> on the owner's own computer. Nothing is stored and no
+   data is sent to any server. See the <a href="../privacidad.html">privacy policy</a> and the
+   <a href="../condiciones.html">terms of service</a>.</p>
+
+<footer>
+  <p>Contacto: patillastheone@gmail.com</p>
+</footer>
+
+</div>
+
+<script>
+// El codigo de TikTok llega aqui como ?code=...&state=...  Se reenvia tal cual
+// al servidor que Tiktok_auth.py levanta en el propio ordenador. Si no hay
+// codigo en la direccion, la pagina se queda como esta: alguien que entre por
+// su cuenta ve solo la explicacion.
+(function () {
+  var parametros = new URLSearchParams(window.location.search);
+  var codigo = parametros.get("code");
+  var estado = document.getElementById("estado");
+
+  if (parametros.get("error")) {
+    estado.textContent = "TikTok ha devuelto un error: " + parametros.get("error") +
+                         ". Cierra esta pestaña y vuelve a lanzar la autorización.";
+    return;
+  }
+  if (!codigo) return;
+
+  estado.textContent = "Código recibido. Entregándolo a la aplicación…";
+  var destino = "http://127.0.0.1:8080/callback?" + parametros.toString();
+
+  // Se usa una imagen en vez de fetch porque la pagina va por https y el
+  // servidor local por http: el navegador bloquea fetch (contenido mixto),
+  // pero deja salir la peticion de una imagen, que es lo unico que hace falta
+  // para que el servidor local reciba el codigo.
+  var sonda = new Image();
+  sonda.onload = sonda.onerror = function () {
+    estado.textContent = "Listo. Vuelve a la ventana de la aplicación; ya puedes cerrar esta pestaña.";
+  };
+  sonda.src = destino;
+
+  // Reserva: si el navegador no deja ni eso, se navega directamente.
+  setTimeout(function () { window.location.href = destino; }, 1500);
+})();
+</script>
+
+</body>
+</html>
